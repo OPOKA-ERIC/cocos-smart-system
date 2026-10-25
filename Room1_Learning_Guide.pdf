@@ -1,0 +1,187 @@
+﻿# CoCIS Smart Control & Monitoring System - Room 1 (Learning Guide)
+
+Generated: 2026-10-24 21:39:50
+Target: ESP32-S3 DevKitC-1, ESP-IDF via PlatformIO, Wokwi Simulation
+
+## Project structure
+D:\cocis-smart-system\room1\
+  |-- platformio.ini
+  |-- wokwi.toml
+  |-- diagram.json
+  \-- src\
+       \-- main.c
+
+## File by file explanation
+
+### platformio.ini
+Purpose: Tells PlatformIO what board/framework to use.
+`ini
+[env:esp32-s3-devkitc-1]
+platform = espressif32
+board = esp32-s3-devkitc-1
+framework = espidf
+monitor_speed = 115200
+`
+- [env:...] - defines an environment
+- platform = espressif32 - Espressif chips platform
+- board = esp32-s3-devkitc-1 - exact dev board (matches Wokwi)
+- framework = espidf - use ESP-IDF (NOT Arduino)
+- monitor_speed - baud rate for serial monitor
+
+### src/main.c
+`c
+#include <stdio.h>
+#include <stdbool.h>
+#include \"freertos/FreeRTOS.h\"
+#include \"freertos/task.h\"
+#include \"driver/gpio.h\"
+#include \"esp_err.h\"
+#include \"esp_log.h\"
+
+#define PIR_GPIO        GPIO_NUM_4
+#define LIGHT_GPIO      GPIO_NUM_2
+#define OCCUPANCY_TIMEOUT_MS 15000
+#define SAMPLE_PERIOD_MS     200
+
+static const char *TAG = \"ROOM1\";
+
+static void room1_task(void *arg)
+{
+    bool occupied = false;
+    TickType_t last_motion = 0;
+
+    while (1) {
+        int motion = gpio_get_level(PIR_GPIO);
+        TickType_t now = xTaskGetTickCount();
+
+        if (motion) {
+            last_motion = now;
+            if (!occupied) {
+                occupied = true;
+                gpio_set_level(LIGHT_GPIO, 1);
+                ESP_LOGI(TAG, \"Motion detected -> OCCUPIED, LIGHT ON\");
+            }
+        } else if (occupied) {
+            uint32_t idle_ms = (now - last_motion) * portTICK_PERIOD_MS;
+            if (idle_ms >= OCCUPANCY_TIMEOUT_MS) {
+                occupied = false;
+                gpio_set_level(LIGHT_GPIO, 0);
+                ESP_LOGI(TAG, \"No motion for %u ms -> VACANT, LIGHT OFF\",
+                         (unsigned)OCCUPANCY_TIMEOUT_MS);
+            }
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(SAMPLE_PERIOD_MS));
+    }
+}
+
+void app_main(void)
+{
+    gpio_config_t pir_config = {
+        .pin_bit_mask = (1ULL << PIR_GPIO),
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_ENABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    ESP_ERROR_CHECK(gpio_config(&pir_config));
+
+    gpio_config_t light_config = {
+        .pin_bit_mask = (1ULL << LIGHT_GPIO),
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    ESP_ERROR_CHECK(gpio_config(&light_config));
+
+    gpio_set_level(LIGHT_GPIO, 0);
+
+    ESP_LOGI(TAG, \"CoCIS Room 1 controller started\");
+    ESP_LOGI(TAG, \"PIR=GPIO%d LIGHT=GPIO%d timeout=%d ms\",
+             PIR_GPIO, LIGHT_GPIO, OCCUPANCY_TIMEOUT_MS);
+
+    xTaskCreate(room1_task, \"room1_task\", 4096, NULL, 5, NULL);
+}
+`
+
+Explanation:
+- app_main() runs once at boot - initializes hardware, logs, creates task
+- gpio_config() configures pins
+- xTaskCreate() creates FreeRTOS task (runs in background)
+- room1_task() loops forever: reads PIR every 200ms
+- State machine: occupied/vacant (only log on transition)
+- Timeout uses xTaskGetTickCount() (FreeRTOS ticks) to track idle time
+- vTaskDelay() yields CPU, not blocking
+
+### wokwi.toml
+`	oml
+[wokwi]
+version = 1
+firmware = '.pio/build/esp32-s3-devkitc-1/firmware.bin'
+elf = '.pio/build/esp32-s3-devkitc-1/firmware.elf'
+`
+Tells Wokwi where to load compiled firmware from.
+
+### diagram.json
+`json
+{
+  \"version\": 1,
+  \"author\": \"CoCIS Room 1\",
+  \"editor\": \"wokwi\",
+  \"parts\": [
+    { \"type\": \"board-esp32-s3-devkitc-1\", \"id\": \"esp\", \"top\": 0, \"left\": 0, \"attrs\": {} },
+    { \"type\": \"wokwi-pir-motion-sensor\", \"id\": \"pir1\", \"top\": -90, \"left\": 260, \"attrs\": {} },
+    { \"type\": \"wokwi-led\", \"id\": \"led1\", \"top\": 100, \"left\": 260, \"attrs\": { \"color\": \"red\" } },
+    { \"type\": \"wokwi-resistor\", \"id\": \"r1\", \"top\": 160, \"left\": 260, \"attrs\": { \"value\": \"220\" } }
+  ],
+  \"connections\": [
+    [\"pir1:VCC\", \"esp:3V3\", \"red\", []],
+    [\"pir1:GND\", \"esp:GND.1\", \"black\", []],
+    [\"pir1:OUT\", \"esp:4\", \"green\", []],
+    [\"esp:2\", \"r1:1\", \"green\", []],
+    [\"r1:2\", \"led1:A\", \"green\", []],
+    [\"led1:C\", \"esp:GND.1\", \"black\", []]
+  ],
+  \"dependencies\": {}
+}
+`
+Connections: PIR OUT->GPIO4, LED via 220Ω on GPIO2.
+
+## Build command from terminal (you tried pio --help)
+You ran pio --help from D:\cocis-smart-system>. To build this specific project, you must be IN the project folder.
+
+Option 1: Change directory
+`powershell
+cd D:\cocis-smart-system\room1
+pio run
+`
+
+Option 2: Build with PlatformIO extension (easier) - Ctrl+Shift+P -> PlatformIO: Build
+
+PlatformIO extension uses pio run under the hood. When you ran pio from parent folder with no platformio.ini, it just showed help - that is correct.
+
+## Step by step to build & run
+1. Open VS Code -> Open Folder -> D:\cocis-smart-system\room1
+2. Ctrl+Shift+P -> PlatformIO: Build
+3. Wait for SUCCESS
+4. F1 -> Wokwi: Start Simulator
+5. Click PIR sensor to trigger motion, wait 15s for timeout
+
+## Common mistakes
+- Building from wrong folder (parent folder) -> pio run gives help
+- Using Arduino framework instead of espidf
+- Wrong pins (GPIO4/GPIO2)
+- Timeout too short for test
+
+## Quick check
+After build, verify:
+`powershell
+Get-ChildItem .pio\build\esp32-s3-devkitc-1\ -File | Where-Object { .Name -match \"firmware|elf\" }
+`
+
+## Learning questions (test yourself)
+1. Why create a task instead of doing everything in app_main loop?
+2. Why use 200ms sampling?
+3. Why log only on transition?
+4. What is xTaskGetTickCount() used for?

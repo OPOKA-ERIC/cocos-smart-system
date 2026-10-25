@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "author": "CoCIS Room 1",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-s3-devkitc-1",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-pir-motion-sensor",
+      "id": "pir1",
+      "top": -90,
+      "left": 260,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led1",
+      "top": 100,
+      "left": 260,
+      "attrs": {
+        "color": "red"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 160,
+      "left": 250,
+      "attrs": {
+        "value": "220"
+      }
+    }
+  ],
+  "connections": [
+    ["pir1:VCC", "esp:3V3", "red", []],
+    ["pir1:GND", "esp:GND.1", "black", []],
+    ["pir1:OUT", "esp:4", "green", []],
+    ["esp:2", "r1:1", "green", []],
+    ["r1:2", "led1:A", "green", []],
+    ["led1:C", "esp:GND.1", "black", []]
+  ],
+  "dependencies": {}
+}

@@ -1,0 +1,13 @@
+# Target labels
+ bootloader
+# Source files and their labels
+D:/cocis-smart-system/room1/.pio/build/esp32-s3-devkitc-1/CMakeFiles/bootloader
+D:/cocis-smart-system/room1/.pio/build/esp32-s3-devkitc-1/CMakeFiles/bootloader.rule
+D:/cocis-smart-system/room1/.pio/build/esp32-s3-devkitc-1/CMakeFiles/bootloader-complete.rule
+D:/cocis-smart-system/room1/.pio/build/esp32-s3-devkitc-1/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule
+D:/cocis-smart-system/room1/.pio/build/esp32-s3-devkitc-1/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule
+D:/cocis-smart-system/room1/.pio/build/esp32-s3-devkitc-1/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule
+D:/cocis-smart-system/room1/.pio/build/esp32-s3-devkitc-1/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule
+D:/cocis-smart-system/room1/.pio/build/esp32-s3-devkitc-1/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule
+D:/cocis-smart-system/room1/.pio/build/esp32-s3-devkitc-1/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule
+D:/cocis-smart-system/room1/.pio/build/esp32-s3-devkitc-1/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule

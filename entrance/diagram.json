@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "author": "CoCIS Entrance",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-s3-devkitc-1",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led1",
+      "top": 100,
+      "left": 260,
+      "attrs": {
+        "color": "yellow"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 160,
+      "left": 250,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-microsd-card",
+      "id": "sd1",
+      "top": -60,
+      "left": 200,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-rfid-rc522",
+      "id": "rfid1",
+      "top": -150,
+      "left": 50,
+      "attrs": {}
+    }
+  ],
+  "connections": [
+    ["esp:2", "r1:1", "green", []],
+    ["r1:2", "led1:A", "green", []],
+    ["led1:C", "esp:GND.1", "black", []],
+    ["sd1:VCC", "esp:3V3", "red", []],
+    ["sd1:GND", "esp:GND.1", "black", []],
+    ["sd1:CS", "esp:10", "blue", []],
+    ["sd1:DI", "esp:11", "orange", []],
+    ["sd1:DO", "esp:13", "yellow", []],
+    ["sd1:SCK", "esp:12", "purple", []],
+    ["rfid1:VCC", "esp:3V3", "red", []],
+    ["rfid1:GND", "esp:GND.1", "black", []],
+    ["rfid1:SDA", "esp:5", "blue", []],
+    ["rfid1:SCK", "esp:15", "purple", []],
+    ["rfid1:MOSI", "esp:6", "orange", []],
+    ["rfid1:MISO", "esp:7", "yellow", []],
+    ["rfid1:RST", "esp:4", "green", []]
+  ],
+  "dependencies": {}
+}
