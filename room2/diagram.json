@@ -42,7 +42,13 @@
     ["pir1:OUT", "esp:4", "green", []],
     ["esp:2", "r1:1", "green", []],
     ["r1:2", "led1:A", "green", []],
-    ["led1:C", "esp:GND.1", "black", []]
+    ["led1:C", "esp:GND.1", "black", []],
+    ["esp:TX", "$serialMonitor:RX", "", []],
+    ["esp:RX", "$serialMonitor:TX", "", []]
   ],
-  "dependencies": {}
+  "dependencies": {},
+  "serialMonitor": {
+    "display": "always",
+    "convertEol": true
+  }
 }
