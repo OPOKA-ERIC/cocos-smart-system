@@ -1,0 +1,22 @@
+# PlatformIO build output
+.pio/
+**/.pio/
+
+# IDE folders
+.vscode/
+**/.vscode/
+
+# Local backup / scratch files
+*.bak
+*.bak2
+*.backup
+*.restored
+CMakeLists.txt.root
+CMakeLists.txt.weird
+CMakeLists.txt.now
+CMakeLists.txt.good
+CMakeLists.txt.final
+
+# OS files
+.DS_Store
+Thumbs.db
