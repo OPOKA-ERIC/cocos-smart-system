@@ -29,6 +29,15 @@
       }
     },
     {
+      "type": "wokwi-buzzer",
+      "id": "bz1",
+      "top": 220,
+      "left": 260,
+      "attrs": {
+        "volume": "0.1"
+      }
+    },
+    {
       "type": "wokwi-microsd-card",
       "id": "sd1",
       "top": -60,
@@ -36,10 +45,17 @@
       "attrs": {}
     },
     {
-      "type": "wokwi-rfid-rc522",
-      "id": "rfid1",
+      "type": "board-mfrc522",
+      "id": "rfid_entry",
       "top": -150,
       "left": 50,
+      "attrs": {}
+    },
+    {
+      "type": "board-mfrc522",
+      "id": "rfid_exit",
+      "top": -150,
+      "left": 380,
       "attrs": {}
     }
   ],
@@ -47,19 +63,28 @@
     ["esp:2", "r1:1", "green", []],
     ["r1:2", "led1:A", "green", []],
     ["led1:C", "esp:GND.1", "black", []],
+    ["esp:18", "bz1:2", "green", []],
+    ["bz1:1", "esp:GND.1", "black", []],
     ["sd1:VCC", "esp:3V3", "red", []],
     ["sd1:GND", "esp:GND.1", "black", []],
     ["sd1:CS", "esp:10", "blue", []],
     ["sd1:DI", "esp:11", "orange", []],
     ["sd1:DO", "esp:13", "yellow", []],
     ["sd1:SCK", "esp:12", "purple", []],
-    ["rfid1:VCC", "esp:3V3", "red", []],
-    ["rfid1:GND", "esp:GND.1", "black", []],
-    ["rfid1:SDA", "esp:5", "blue", []],
-    ["rfid1:SCK", "esp:15", "purple", []],
-    ["rfid1:MOSI", "esp:6", "orange", []],
-    ["rfid1:MISO", "esp:7", "yellow", []],
-    ["rfid1:RST", "esp:4", "green", []]
+    ["rfid_entry:3.3V", "esp:3V3", "red", []],
+    ["rfid_entry:GND", "esp:GND.1", "black", []],
+    ["rfid_entry:SDA", "esp:5", "blue", []],
+    ["rfid_entry:SCK", "esp:15", "purple", []],
+    ["rfid_entry:MOSI", "esp:6", "orange", []],
+    ["rfid_entry:MISO", "esp:7", "yellow", []],
+    ["rfid_entry:RST", "esp:4", "green", []],
+    ["rfid_exit:3.3V", "esp:3V3", "red", []],
+    ["rfid_exit:GND", "esp:GND.1", "black", []],
+    ["rfid_exit:SDA", "esp:16", "blue", []],
+    ["rfid_exit:SCK", "esp:15", "purple", []],
+    ["rfid_exit:MOSI", "esp:6", "orange", []],
+    ["rfid_exit:MISO", "esp:7", "yellow", []],
+    ["rfid_exit:RST", "esp:17", "green", []]
   ],
   "dependencies": {}
 }

@@ -1,1 +1,3 @@
-idf_component_register(SRCS "main.c" INCLUDE_DIRS "../include" REQUIRES driver)
+idf_component_register(SRCS "main.c" "mqtt_bus.c"
+                       INCLUDE_DIRS "../include"
+                       REQUIRES driver esp_wifi nvs_flash esp_netif esp_event lwip esp_timer)
