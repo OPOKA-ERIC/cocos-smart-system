@@ -646,6 +646,9 @@ static void rfid_task(void *arg)
     char last_uid[24] = "";
     bool present = false;
     int absent_reads = 0;
+    uint8_t shown_stage = 0xFF;
+
+    ESP_LOGI(TAG, "%s RFID task started (CS=%d)", ctx->term, (int)ctx->reader->cs);
 
     while (true) {
         uint8_t uid[10];
@@ -654,6 +657,7 @@ static void rfid_task(void *arg)
             char u[24];
             uid_to_str(uid, len, u, sizeof(u));
             absent_reads = 0;
+            shown_stage = 0;
             if (!present || strcmp(u, last_uid) != 0) {
                 present = true;
                 strlcpy(last_uid, u, sizeof(last_uid));
@@ -664,9 +668,22 @@ static void rfid_task(void *arg)
                     handle_exit(u);
                 }
             }
-        } else if (present && ++absent_reads >= 8) {
-            present = false;
-            last_uid[0] = '\0';
+        } else {
+            if (ctx->reader->last_stage != shown_stage) {
+                shown_stage = ctx->reader->last_stage;
+                ESP_LOGW(TAG, "%s stage=%u atqa=%02X%02X/%u resp=%02X%02X%02X%02X%02X/%u",
+                         ctx->term, (unsigned)shown_stage,
+                         ctx->reader->last_atqa[0], ctx->reader->last_atqa[1],
+                         (unsigned)ctx->reader->last_atqa_len,
+                         ctx->reader->last_resp[0], ctx->reader->last_resp[1],
+                         ctx->reader->last_resp[2], ctx->reader->last_resp[3],
+                         ctx->reader->last_resp[4],
+                         (unsigned)ctx->reader->last_resp_len);
+            }
+            if (present && ++absent_reads >= 8) {
+                present = false;
+                last_uid[0] = '\0';
+            }
         }
         vTaskDelay(pdMS_TO_TICKS(150));
     }
@@ -1020,15 +1037,53 @@ static void menu_task(void *arg)
 {
     (void)arg;
     char line[160];
+    size_t len = 0;
+    bool last_cr = false;
+
     print_help();
+    printf("cocis> ");
+    fflush(stdout);
+
     while (true) {
-        printf("cocis> ");
-        fflush(stdout);
-        if (fgets(line, sizeof(line), stdin) == NULL) {
-            vTaskDelay(pdMS_TO_TICKS(100));
+        int c = fgetc(stdin);
+        if (c == EOF) {
+            clearerr(stdin);
+            vTaskDelay(pdMS_TO_TICKS(50));
             continue;
         }
-        handle_menu_line(line);
+
+        if (c == '\r' || c == '\n') {
+            if (c == '\n' && last_cr) {
+                last_cr = false;
+                continue;
+            }
+            last_cr = (c == '\r');
+            printf("\n");
+            if (len > 0) {
+                line[len] = '\0';
+                handle_menu_line(line);
+                len = 0;
+            }
+            printf("cocis> ");
+            fflush(stdout);
+            continue;
+        }
+
+        last_cr = false;
+        if (c == '\b' || c == 0x7F) {
+            if (len > 0) {
+                len--;
+                printf("\b \b");
+                fflush(stdout);
+            }
+            continue;
+        }
+
+        if (c >= 0x20 && c < 0x7F && len + 1 < sizeof(line)) {
+            line[len++] = (char)c;
+            putchar(c);
+            fflush(stdout);
+        }
     }
 }
 

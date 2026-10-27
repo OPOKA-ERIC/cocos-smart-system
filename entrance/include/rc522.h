@@ -11,6 +11,11 @@ typedef struct {
     spi_device_handle_t spi;
     gpio_num_t cs;
     gpio_num_t rst;
+    volatile uint8_t last_stage;
+    uint8_t last_atqa[2];
+    uint8_t last_atqa_len;
+    uint8_t last_resp[5];
+    uint8_t last_resp_len;
 } rc522_t;
 
 esp_err_t rc522_init(rc522_t *dev, spi_host_device_t host, gpio_num_t cs, gpio_num_t rst);

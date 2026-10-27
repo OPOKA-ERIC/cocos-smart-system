@@ -1,5 +1,6 @@
 #include "mqtt_bus.h"
 
+#include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
@@ -26,6 +27,7 @@ static const char *TAG = "MQTT";
 static int s_sock = -1;
 static bool s_started = false;
 static bool s_connected = false;
+static bool s_warned = false;
 static SemaphoreHandle_t s_tx_lock = NULL;
 static SemaphoreHandle_t s_state_lock = NULL;
 static mqtt_msg_cb_t s_cb = NULL;
@@ -178,23 +180,27 @@ static int mqtt_connect(void)
 
     int gai = getaddrinfo(s_host, portbuf, &hints, &res);
     if (gai != 0 || res == NULL) {
-        ESP_LOGW(TAG, "DNS lookup failed for %s (%d)", s_host, gai);
+        ESP_LOGW(TAG, "DNS failed for %s: gai=%d", s_host, gai);
         return -1;
     }
 
     int sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
     if (sock < 0) {
-        ESP_LOGW(TAG, "socket() failed");
+        ESP_LOGW(TAG, "socket() failed: errno=%d", errno);
         freeaddrinfo(res);
         return -1;
     }
 
-    struct timeval tv = {.tv_sec = 5, .tv_usec = 0};
+    struct sockaddr_in *addr = (struct sockaddr_in *)res->ai_addr;
+    char ip[16] = "?";
+    inet_ntoa_r(addr->sin_addr, ip, sizeof(ip));
+
+    struct timeval tv = {.tv_sec = 10, .tv_usec = 0};
     setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
     if (connect(sock, res->ai_addr, res->ai_addrlen) != 0) {
-        ESP_LOGW(TAG, "connect to %s:%u failed", s_host, s_port);
+        ESP_LOGW(TAG, "connect to %s:%u (%s) failed: errno=%d", s_host, s_port, ip, errno);
         close(sock);
         freeaddrinfo(res);
         return -1;
@@ -250,9 +256,9 @@ static int mqtt_connect(void)
         return -1;
     }
 
-    uint8_t ack[4];
+    uint8_t ack[4] = {0};
     if (recv_exact(sock, ack, 4) != 0 || ack[0] != 0x20 || ack[3] != 0x00) {
-        ESP_LOGW(TAG, "CONNACK rejected or timed out");
+        ESP_LOGW(TAG, "CONNACK failed: hdr=%02X code=%u", ack[0], ack[3]);
         close(sock);
         return -1;
     }
@@ -261,7 +267,7 @@ static int mqtt_connect(void)
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &rtv, sizeof(rtv));
 
     s_sock = sock;
-    ESP_LOGI(TAG, "connected to %s:%u", s_host, s_port);
+    ESP_LOGI(TAG, "connected to %s:%u (%s)", s_host, s_port, ip);
     return 0;
 }
 
@@ -373,6 +379,7 @@ static void mqtt_task(void *arg)
     (void)arg;
     while (true) {
         if (mqtt_connect() == 0) {
+            s_warned = false;
             if (xSemaphoreTake(s_state_lock, portMAX_DELAY) == pdTRUE) {
                 s_connected = true;
                 xSemaphoreGive(s_state_lock);
@@ -403,7 +410,13 @@ static void mqtt_task(void *arg)
                 s_connected = false;
                 xSemaphoreGive(s_state_lock);
             }
-            ESP_LOGW(TAG, "disconnected, retrying in 3s");
+            if (!s_warned) {
+                ESP_LOGW(TAG, "MQTT disconnected; retrying quietly in background");
+                s_warned = true;
+            }
+        } else if (!s_warned) {
+            ESP_LOGW(TAG, "MQTT broker unavailable; retrying every 10s (RFID/SD still work)");
+            s_warned = true;
         }
 
         if (s_tx_lock != NULL && xSemaphoreTake(s_tx_lock, portMAX_DELAY) == pdTRUE) {
@@ -413,7 +426,7 @@ static void mqtt_task(void *arg)
             }
             xSemaphoreGive(s_tx_lock);
         }
-        vTaskDelay(pdMS_TO_TICKS(3000));
+        vTaskDelay(pdMS_TO_TICKS(10000));
     }
 }
 

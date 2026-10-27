@@ -71,6 +71,38 @@ static uint8_t rc522_read_reg(rc522_t *dev, uint8_t reg)
     return rx[1];
 }
 
+static void rc522_read_fifo(rc522_t *dev, uint8_t *buf, uint8_t len)
+{
+    if (len == 0) {
+        return;
+    }
+    uint8_t tx[1 + 16] = {0};
+    uint8_t rx[1 + 16] = {0};
+    tx[0] = rc522_addr(RC522_REG_FIFO_DATA, false);
+    spi_transaction_t t = {
+        .length = 8 * (1 + len),
+        .tx_buffer = tx,
+        .rx_buffer = rx,
+    };
+    spi_device_transmit(dev->spi, &t);
+    memcpy(buf, rx + 1, len);
+}
+
+static void rc522_write_fifo(rc522_t *dev, const uint8_t *buf, uint8_t len)
+{
+    if (len == 0) {
+        return;
+    }
+    uint8_t tx[1 + 16] = {0};
+    tx[0] = rc522_addr(RC522_REG_FIFO_DATA, true);
+    memcpy(tx + 1, buf, len);
+    spi_transaction_t t = {
+        .length = 8 * (1 + len),
+        .tx_buffer = tx,
+    };
+    spi_device_transmit(dev->spi, &t);
+}
+
 static void rc522_antenna_on(rc522_t *dev)
 {
     uint8_t v = rc522_read_reg(dev, RC522_REG_TX_CONTROL);
@@ -154,9 +186,7 @@ static bool rc522_transceive(rc522_t *dev, const uint8_t *send, uint8_t send_len
     rc522_write_reg(dev, RC522_REG_FIFO_LEVEL, 0x80);
     rc522_write_reg(dev, RC522_REG_BIT_FRAMING, framing);
 
-    for (uint8_t i = 0; i < send_len; i++) {
-        rc522_write_reg(dev, RC522_REG_FIFO_DATA, send[i]);
-    }
+    rc522_write_fifo(dev, send, send_len);
 
     rc522_write_reg(dev, RC522_REG_COMMAND, RC522_CMD_TRANSCEIVE);
     rc522_write_reg(dev, RC522_REG_BIT_FRAMING, (uint8_t)(framing | 0x80));
@@ -185,9 +215,7 @@ static bool rc522_transceive(rc522_t *dev, const uint8_t *send, uint8_t send_len
     if (n > *back_len) {
         n = *back_len;
     }
-    for (uint8_t i = 0; i < n; i++) {
-        back[i] = rc522_read_reg(dev, RC522_REG_FIFO_DATA);
-    }
+    rc522_read_fifo(dev, back, n);
     *back_len = n;
     if (valid_bits != NULL) {
         *valid_bits = rc522_read_reg(dev, RC522_REG_CONTROL) & 0x07;
@@ -200,9 +228,7 @@ static uint16_t rc522_crc(rc522_t *dev, const uint8_t *data, uint8_t len)
     rc522_write_reg(dev, RC522_REG_COMMAND, RC522_CMD_IDLE);
     rc522_write_reg(dev, RC522_REG_DIV_IRQ, 0x04);
     rc522_write_reg(dev, RC522_REG_FIFO_LEVEL, 0x80);
-    for (uint8_t i = 0; i < len; i++) {
-        rc522_write_reg(dev, RC522_REG_FIFO_DATA, data[i]);
-    }
+    rc522_write_fifo(dev, data, len);
     rc522_write_reg(dev, RC522_REG_COMMAND, RC522_CMD_CALC_CRC);
 
     for (int i = 0; i < 100; i++) {
@@ -242,10 +268,17 @@ bool rc522_read_uid(rc522_t *dev, uint8_t *uid, uint8_t *uid_len)
         return false;
     }
     uint8_t cmd = PICC_CMD_REQA;
-    uint8_t atqa[2];
+    uint8_t atqa[2] = {0};
     uint8_t atqa_len = sizeof(atqa);
     uint8_t valid = 7;
-    if (!rc522_transceive(dev, &cmd, 1, atqa, &atqa_len, &valid) || atqa_len != 2) {
+    dev->last_stage = 1;
+    if (!rc522_transceive(dev, &cmd, 1, atqa, &atqa_len, &valid)) {
+        return false;
+    }
+    dev->last_atqa_len = atqa_len;
+    memcpy(dev->last_atqa, atqa, sizeof(dev->last_atqa));
+    dev->last_stage = 2;
+    if (atqa_len != 2) {
         return false;
     }
 
@@ -256,12 +289,19 @@ bool rc522_read_uid(rc522_t *dev, uint8_t *uid, uint8_t *uid_len)
 
     for (int level = 0; level < 3; level++) {
         uint8_t frame[2] = {sel, 0x20};
-        uint8_t resp[5];
+        uint8_t resp[5] = {0};
         uint8_t resp_len = sizeof(resp);
         uint8_t v = 0;
-        if (!rc522_transceive(dev, frame, 2, resp, &resp_len, &v) || resp_len != 5) {
+        dev->last_stage = 3;
+        if (!rc522_transceive(dev, frame, 2, resp, &resp_len, &v)) {
             goto done;
         }
+        dev->last_resp_len = resp_len;
+        memcpy(dev->last_resp, resp, sizeof(dev->last_resp));
+        if (resp_len != 5) {
+            goto done;
+        }
+        dev->last_stage = 4;
         if ((resp[0] ^ resp[1] ^ resp[2] ^ resp[3]) != resp[4]) {
             goto done;
         }
@@ -269,6 +309,7 @@ bool rc522_read_uid(rc522_t *dev, uint8_t *uid, uint8_t *uid_len)
         if (resp[0] == 0x88) {
             memcpy(buf + pos, resp + 1, 3);
             pos += 3;
+            dev->last_stage = 5;
             if (!rc522_select(dev, sel, resp)) {
                 goto done;
             }
@@ -276,6 +317,7 @@ bool rc522_read_uid(rc522_t *dev, uint8_t *uid, uint8_t *uid_len)
         } else {
             memcpy(buf + pos, resp, 4);
             pos += 4;
+            dev->last_stage = 5;
             if (!rc522_select(dev, sel, resp)) {
                 goto done;
             }
@@ -286,6 +328,7 @@ bool rc522_read_uid(rc522_t *dev, uint8_t *uid, uint8_t *uid_len)
     if (pos >= 4) {
         memcpy(uid, buf, pos);
         *uid_len = (uint8_t)pos;
+        dev->last_stage = 0;
         ok = true;
     }
 
