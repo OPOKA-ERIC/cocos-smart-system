@@ -175,7 +175,7 @@ static void wifi_setup(void)
 
     s_wifi_events = xEventGroupCreate();
     ESP_ERROR_CHECK(esp_netif_init());
-    esp_err_t err = esp_event_loop_create_default();
+    err = esp_event_loop_create_default();
     if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
         ESP_ERROR_CHECK(err);
     }
