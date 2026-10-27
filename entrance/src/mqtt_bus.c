@@ -218,10 +218,7 @@ static int mqtt_connect(void)
     body[b++] = 'Q';
     body[b++] = 'T';
     body[b++] = 0x04;
-    uint8_t flags = 0x02;
-    if (wtlen > 0) {
-        flags |= 0x04 | 0x20;
-    }
+    uint8_t flags = 0x02; // clean session, no will
     body[b++] = flags;
     body[b++] = 0x00;
     body[b++] = 0x3C;
@@ -229,16 +226,6 @@ static int mqtt_connect(void)
     body[b++] = (uint8_t)(cidlen & 0xFF);
     memcpy(body + b, s_client_id, cidlen);
     b += cidlen;
-    if (wtlen > 0) {
-        body[b++] = (uint8_t)(wtlen >> 8);
-        body[b++] = (uint8_t)(wtlen & 0xFF);
-        memcpy(body + b, s_status_topic, wtlen);
-        b += wtlen;
-        body[b++] = (uint8_t)(wmlen >> 8);
-        body[b++] = (uint8_t)(wmlen & 0xFF);
-        memcpy(body + b, s_will_msg, wmlen);
-        b += wmlen;
-    }
 
     uint8_t pkt[256];
     int p = 0;
