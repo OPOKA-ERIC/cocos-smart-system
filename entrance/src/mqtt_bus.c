@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <string.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -243,9 +244,20 @@ static int mqtt_connect(void)
         return -1;
     }
 
+    fd_set rfds;
+    struct timeval tv2 = {.tv_sec = 3, .tv_usec = 0};
+    FD_ZERO(&rfds);
+    FD_SET(sock, &rfds);
+    if (select(sock + 1, &rfds, NULL, NULL, &tv2) <= 0) {
+        ESP_LOGW(TAG, "CONNACK timeout");
+        close(sock);
+        return -1;
+    }
+
     uint8_t ack[4] = {0};
-    if (recv_exact(sock, ack, 4) != 0 || ack[0] != 0x20 || ack[3] != 0x00) {
-        ESP_LOGW(TAG, "CONNACK failed: hdr=%02X code=%u", ack[0], ack[3]);
+    int nr = recv(sock, ack, 4, 0);
+    if (nr != 4 || ack[0] != 0x20 || ack[3] != 0x00) {
+        ESP_LOGW(TAG, "CONNACK failed: got=%d hdr=%02X code=%u", nr, ack[0], ack[3]);
         close(sock);
         return -1;
     }
