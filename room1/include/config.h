@@ -15,7 +15,7 @@
 #define WIFI_SSID       "Wokwi-GUEST"
 #define WIFI_PASS       ""
 
-#define MQTT_HOST       "test.mosquitto.org"
+#define MQTT_HOST       "broker.hivemq.com"
 #define MQTT_PORT       1883
 #define MQTT_TOPIC_PREFIX "cocis/2026/opoka-eric"
 #define MQTT_CLIENT_ID  "cocis-room1-opoka"
