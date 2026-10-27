@@ -28,7 +28,7 @@
 #define WIFI_PASS           ""
 
 // MQTT
-#define MQTT_HOST           "172.28.167.62"
+#define MQTT_HOST           "broker.hivemq.com"
 #define MQTT_PORT           1883
 #define MQTT_TOPIC_PREFIX   "cocis/2026/opoka-eric"
 #define MQTT_CLIENT_ID      "cocis-entrance-opoka"

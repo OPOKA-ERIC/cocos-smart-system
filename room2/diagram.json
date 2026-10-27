@@ -52,7 +52,6 @@
     "convertEol": true
   },
   "gateway": {
-    "enabled": true,
-    "url": "tcp://172.28.167.62:1883"
+    "enabled": false
   }
 }
