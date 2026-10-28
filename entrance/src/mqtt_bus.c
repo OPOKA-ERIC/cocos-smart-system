@@ -219,7 +219,7 @@ static int mqtt_connect(void)
     body[b++] = 'Q';
     body[b++] = 'T';
     body[b++] = 0x04;
-    uint8_t flags = 0x02; // clean session, no will
+    uint8_t flags = 0x02; // clean session
     body[b++] = flags;
     body[b++] = 0x00;
     body[b++] = 0x3C;
