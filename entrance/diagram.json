@@ -94,7 +94,6 @@
     "convertEol": true
   },
   "gateway": {
-    "enabled": true,
-    "url": "tcp://host.wokwi.internal:1883"
+    "enabled": false
   }
 }
