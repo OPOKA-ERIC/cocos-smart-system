@@ -964,6 +964,11 @@ static void handle_menu_line(char *line)
         publish_state();
         fflush(stdout);
     } else if (strcmp(cmd, "setpin") == 0) {
+        if (!is_authenticated()) {
+            printf("Login first: login <pin>\n");
+            fflush(stdout);
+            return;
+        }
         char old_pin[8] = "";
         char new_pin[8] = "";
         if (sscanf(rest, "%7s %7s", old_pin, new_pin) != 2) {
@@ -987,6 +992,11 @@ static void handle_menu_line(char *line)
         printf("PIN updated.\n");
         fflush(stdout);
     } else if (strcmp(cmd, "room1") == 0 || strcmp(cmd, "room2") == 0) {
+        if (!is_authenticated()) {
+            printf("Login first: login <pin>\n");
+            fflush(stdout);
+            return;
+        }
         int room = cmd[4] - '0';
         const char *topic = room == 1 ? TOPIC_ROOM1_CMD : TOPIC_ROOM2_CMD;
         char action[16] = "";
