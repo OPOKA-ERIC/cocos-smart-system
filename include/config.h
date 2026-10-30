@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include "driver/gpio.h"
 
-// Door feedback
+// Door feedback (Entrance)
 #define DOOR_LOCK_GPIO      GPIO_NUM_2
 #define BUZZER_GPIO         GPIO_NUM_18
 
@@ -23,24 +23,13 @@
 #define RFID_EXIT_CS_GPIO   GPIO_NUM_16
 #define RFID_EXIT_RST_GPIO  GPIO_NUM_17
 
-// Wi-Fi (Wokwi internet gateway)
-#define WIFI_SSID           "Wokwi-GUEST"
-#define WIFI_PASS           ""
+// Room 1 (remapped to avoid conflicts)
+#define ROOM1_PIR_GPIO      GPIO_NUM_38
+#define ROOM1_LIGHT_GPIO    GPIO_NUM_39
 
-// MQTT
-#define MQTT_HOST           "host.wokwi.internal"
-#define MQTT_PORT           1883
-#define MQTT_TOPIC_PREFIX   "cocis/2026/opoka-eric"
-#define MQTT_CLIENT_ID      "cocis-entrance-opoka"
-#define MQTT_STATUS_TOPIC   MQTT_TOPIC_PREFIX "/status/entrance"
-#define TOPIC_ENTRANCE_EVENT MQTT_TOPIC_PREFIX "/entrance/event"
-#define TOPIC_ENTRANCE_STATE MQTT_TOPIC_PREFIX "/entrance/state"
-#define TOPIC_ROOM1_STATE   MQTT_TOPIC_PREFIX "/room1/state"
-#define TOPIC_ROOM2_STATE   MQTT_TOPIC_PREFIX "/room2/state"
-#define TOPIC_ROOM1_STATUS  MQTT_TOPIC_PREFIX "/status/room1"
-#define TOPIC_ROOM2_STATUS  MQTT_TOPIC_PREFIX "/status/room2"
-#define TOPIC_ROOM1_CMD     MQTT_TOPIC_PREFIX "/room1/cmd"
-#define TOPIC_ROOM2_CMD     MQTT_TOPIC_PREFIX "/room2/cmd"
+// Room 2 (remapped to avoid conflicts)
+#define ROOM2_PIR_GPIO      GPIO_NUM_40
+#define ROOM2_LIGHT_GPIO    GPIO_NUM_41
 
 // Access policy
 #define ACCESS_START_HOUR_DEFAULT 7
@@ -48,6 +37,9 @@
 #define MAX_PEOPLE                50
 #define ADMIN_PIN_DEFAULT         "1234"
 #define AUTH_WINDOW_MS            60000
+
+// Room timing
+#define OCCUPANCY_TIMEOUT_MS 15000
 
 // Storage
 #define SD_MOUNT_POINT      "/sdcard"

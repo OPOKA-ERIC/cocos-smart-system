@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "author": "CoCIS Entrance",
+  "author": "CoCIS Single ESP32",
   "editor": "wokwi",
   "parts": [
     {
@@ -12,7 +12,7 @@
     },
     {
       "type": "wokwi-led",
-      "id": "led1",
+      "id": "led_door",
       "top": 100,
       "left": 260,
       "attrs": {
@@ -21,7 +21,7 @@
     },
     {
       "type": "wokwi-resistor",
-      "id": "r1",
+      "id": "r_door",
       "top": 160,
       "left": 250,
       "attrs": {
@@ -57,12 +57,62 @@
       "top": -150,
       "left": 380,
       "attrs": {}
+    },
+    {
+      "type": "wokwi-pir-motion-sensor",
+      "id": "pir1",
+      "top": -90,
+      "left": 550,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_room1",
+      "top": 100,
+      "left": 600,
+      "attrs": {
+        "color": "red"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_room1",
+      "top": 160,
+      "left": 590,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-pir-motion-sensor",
+      "id": "pir2",
+      "top": -90,
+      "left": 700,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_room2",
+      "top": 100,
+      "left": 750,
+      "attrs": {
+        "color": "blue"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_room2",
+      "top": 160,
+      "left": 740,
+      "attrs": {
+        "value": "220"
+      }
     }
   ],
   "connections": [
-    ["esp:2", "r1:1", "green", []],
-    ["r1:2", "led1:A", "green", []],
-    ["led1:C", "esp:GND.1", "black", []],
+    ["esp:2", "r_door:1", "green", []],
+    ["r_door:2", "led_door:A", "green", []],
+    ["led_door:C", "esp:GND.1", "black", []],
     ["esp:18", "bz1:2", "green", []],
     ["bz1:1", "esp:GND.1", "black", []],
     ["sd1:VCC", "esp:3V3", "red", []],
@@ -85,6 +135,18 @@
     ["rfid_exit:MOSI", "esp:6", "orange", []],
     ["rfid_exit:MISO", "esp:7", "yellow", []],
     ["rfid_exit:RST", "esp:17", "green", []],
+    ["pir1:VCC", "esp:3V3", "red", []],
+    ["pir1:GND", "esp:GND.1", "black", []],
+    ["pir1:OUT", "esp:38", "green", []],
+    ["esp:39", "r_room1:1", "green", []],
+    ["r_room1:2", "led_room1:A", "green", []],
+    ["led_room1:C", "esp:GND.1", "black", []],
+    ["pir2:VCC", "esp:3V3", "red", []],
+    ["pir2:GND", "esp:GND.1", "black", []],
+    ["pir2:OUT", "esp:40", "green", []],
+    ["esp:41", "r_room2:1", "green", []],
+    ["r_room2:2", "led_room2:A", "green", []],
+    ["led_room2:C", "esp:GND.1", "black", []],
     ["esp:TX", "$serialMonitor:RX", "", []],
     ["esp:RX", "$serialMonitor:TX", "", []]
   ],
@@ -92,9 +154,5 @@
   "serialMonitor": {
     "display": "always",
     "convertEol": true
-  },
-  "gateway": {
-    "enabled": true,
-    "url": "tcp://host.wokwi.internal:1883"
   }
 }
