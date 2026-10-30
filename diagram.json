@@ -11,10 +11,24 @@
       "attrs": {}
     },
     {
+      "type": "board-mfrc522",
+      "id": "rfid_entry",
+      "top": -180,
+      "left": -200,
+      "attrs": {}
+    },
+    {
+      "type": "board-mfrc522",
+      "id": "rfid_exit",
+      "top": -180,
+      "left": 220,
+      "attrs": {}
+    },
+    {
       "type": "wokwi-led",
       "id": "led_door",
-      "top": 100,
-      "left": 260,
+      "top": -160,
+      "left": 60,
       "attrs": {
         "color": "yellow"
       }
@@ -22,54 +36,40 @@
     {
       "type": "wokwi-resistor",
       "id": "r_door",
-      "top": 160,
-      "left": 250,
+      "top": -110,
+      "left": 50,
       "attrs": {
         "value": "220"
       }
     },
     {
+      "type": "wokwi-microsd-card",
+      "id": "sd1",
+      "top": 0,
+      "left": 480,
+      "attrs": {}
+    },
+    {
       "type": "wokwi-buzzer",
       "id": "bz1",
-      "top": 220,
-      "left": 260,
+      "top": 120,
+      "left": 480,
       "attrs": {
         "volume": "0.1"
       }
     },
     {
-      "type": "wokwi-microsd-card",
-      "id": "sd1",
-      "top": -60,
-      "left": 200,
-      "attrs": {}
-    },
-    {
-      "type": "board-mfrc522",
-      "id": "rfid_entry",
-      "top": -150,
-      "left": 50,
-      "attrs": {}
-    },
-    {
-      "type": "board-mfrc522",
-      "id": "rfid_exit",
-      "top": -150,
-      "left": 380,
-      "attrs": {}
-    },
-    {
       "type": "wokwi-pir-motion-sensor",
       "id": "pir1",
-      "top": -90,
-      "left": 550,
+      "top": 320,
+      "left": -200,
       "attrs": {}
     },
     {
       "type": "wokwi-led",
       "id": "led_room1",
-      "top": 100,
-      "left": 600,
+      "top": 430,
+      "left": -170,
       "attrs": {
         "color": "red"
       }
@@ -77,8 +77,8 @@
     {
       "type": "wokwi-resistor",
       "id": "r_room1",
-      "top": 160,
-      "left": 590,
+      "top": 480,
+      "left": -180,
       "attrs": {
         "value": "220"
       }
@@ -86,15 +86,15 @@
     {
       "type": "wokwi-pir-motion-sensor",
       "id": "pir2",
-      "top": -90,
-      "left": 700,
+      "top": 320,
+      "left": 220,
       "attrs": {}
     },
     {
       "type": "wokwi-led",
       "id": "led_room2",
-      "top": 100,
-      "left": 750,
+      "top": 430,
+      "left": 250,
       "attrs": {
         "color": "blue"
       }
@@ -102,8 +102,8 @@
     {
       "type": "wokwi-resistor",
       "id": "r_room2",
-      "top": 160,
-      "left": 740,
+      "top": 480,
+      "left": 240,
       "attrs": {
         "value": "220"
       }

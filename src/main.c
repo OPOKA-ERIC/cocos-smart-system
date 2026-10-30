@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <sys/time.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
@@ -9,12 +10,8 @@
 
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
-#include "esp_event.h"
 #include "esp_log.h"
-#include "esp_netif.h"
-#include "esp_sntp.h"
 #include "esp_system.h"
-#include "esp_timer.h"
 #include "esp_vfs_fat.h"
 #include "nvs_flash.h"
 #include "nvs.h"
@@ -24,8 +21,6 @@
 #include "rc522.h"
 
 static const char *TAG = "COCIS";
-
-#define WIFI_CONNECTED_BIT BIT0
 
 typedef struct {
     char uid[24];
@@ -37,15 +32,6 @@ typedef struct {
     char name[24];
     time_t entered;
 } occupant_t;
-
-typedef struct {
-    bool valid;
-    bool online;
-    bool occupied;
-    bool light;
-    char mode[8];
-    uint32_t seq;
-} room_state_t;
 
 static const allowed_user_t s_allowed[] = {
     {"01:02:03:04", "Blue Card (Alice)"},
@@ -77,8 +63,6 @@ static occupant_t s_occupants[MAX_PEOPLE];
 static int s_occupant_count = 0;
 
 // Rooms
-static room_state_t s_room1;
-static room_state_t s_room2;
 static SemaphoreHandle_t s_room_lock = NULL;
 static bool s_room1_occupied = false;
 static bool s_room2_occupied = false;
@@ -88,8 +72,6 @@ static char s_room1_mode[8] = "AUTO";
 static char s_room2_mode[8] = "AUTO";
 static TickType_t s_room1_last_motion = 0;
 static TickType_t s_room2_last_motion = 0;
-static uint32_t s_room1_seq = 0;
-static uint32_t s_room2_seq = 0;
 
 static void fmt_time(char *out, size_t len)
 {
@@ -460,7 +442,6 @@ static void room_set_mode(int room, const char *mode)
         } else {
             s_room1_light = s_room1_occupied;
         }
-        s_room1_seq++;
         xSemaphoreGive(s_room_lock);
         gpio_set_level(ROOM1_LIGHT_GPIO, s_room1_light ? 1 : 0);
         ESP_LOGI(TAG, "ROOM1 mode=%s light=%d", mode, s_room1_light);
@@ -474,7 +455,6 @@ static void room_set_mode(int room, const char *mode)
         } else {
             s_room2_light = s_room2_occupied;
         }
-        s_room2_seq++;
         xSemaphoreGive(s_room_lock);
         gpio_set_level(ROOM2_LIGHT_GPIO, s_room2_light ? 1 : 0);
         ESP_LOGI(TAG, "ROOM2 mode=%s light=%d", mode, s_room2_light);
@@ -568,7 +548,6 @@ static void print_status(void)
     printf("Schedule   : %s-%s (%s)\n", start, end, access_window_open() ? "OPEN" : "CLOSED");
     printf("SD card    : %s\n", s_sd_ok ? "mounted" : "not mounted");
     printf("Admin      : %s\n", is_authenticated() ? "unlocked" : "locked");
-    printf("MQTT       : disabled (local)\n");
 
     xSemaphoreTake(s_state_lock, portMAX_DELAY);
     printf("Inside     : %d/%d\n", s_occupant_count, MAX_PEOPLE);
@@ -847,7 +826,7 @@ static void menu_task(void *arg)
 
 void app_main(void)
 {
-    ESP_LOGI(TAG, "CoCIS Single-ESP32 starting (no MQTT)");
+    ESP_LOGI(TAG, "CoCIS starting");
 
     s_state_lock = xSemaphoreCreateMutex();
     s_sd_lock = xSemaphoreCreateMutex();
@@ -875,5 +854,5 @@ void app_main(void)
     xTaskCreate(room_task, "rooms", 4096, NULL, 5, NULL);
     xTaskCreate(menu_task, "menu", 8192, NULL, 3, NULL);
 
-    ESP_LOGI(TAG, "ready - single ESP32, local control, no MQTT");
+    ESP_LOGI(TAG, "ready");
 }
